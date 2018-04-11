@@ -4,10 +4,14 @@
   display: block;
   outline: none;
   position: relative;
-  z-index: var(--zindex-dropdown);
 
   @nest &:focus {
     box-shadow: var(--input-box-shadow--focus);
+  }
+
+  @nest &.disabled {
+    pointer-events: none;
+    opacity: 0.5;
   }
 }
 
@@ -15,20 +19,27 @@
   composes: root from 'part:@sanity/base/theme/forms/text-input-style';
   cursor: default;
 
-  @nest .transparent & {
-    transition: all 0.05s linear;
-    background-color: transparent;
-    border: 1px solid color(var(--gray-base) a(8%));
-
-    @nest &:hover {
-      background-color: var(--white);
-      border-color: var(--gray-light);
-    }
+  @nest &:hover {
+    box-shadow: var(--input-box-shadow--hover);
+    border-color: var(--input-border-color-hover);
   }
 }
 
-.transparent:not(:hover) .inner {
-  box-shadow: none;
+.transparent .inner {
+  background-color: transparent;
+}
+
+.transparent:hover .inner {
+  box-shadow: var(--input-box-shadow--hover);
+  border-color: var(--input-border-color-hover);
+  background-color: var(--input-bg);
+}
+
+.root:focus .inner,
+.root:focus:hover .inner {
+  box-shadow: var(--input-box-shadow--focus);
+  border-color: var(--input-border-color-focus);
+  background-color: var(--input-bg);
 }
 
 .selectContainer {
@@ -50,6 +61,7 @@
   left: 0;
 }
 
+<<<<<<< HEAD
 .popper {
   composes: shadow-6dp from "part:@sanity/base/theme/shadows-style";
   box-sizing: border-box;
@@ -59,10 +71,21 @@
   overflow: auto;
 }
 
+=======
+>>>>>>> [form-builder] Fixing styleselect
 .list {
   margin: 0;
   padding: 0;
   display: block;
+  position: absolute;
+  overflow: hidden;
+  composes: shadow-4dp from "part:@sanity/base/theme/shadows-style";
+  box-sizing: border-box;
+  transform: translateY(-1px);
+  background-color: var(--component-bg);
+  height: auto;
+  width: auto;
+  overflow-y: auto;
 }
 
 .text {
@@ -71,6 +94,17 @@
 
 .listContainerHidden {
   display: none;
+}
+
+.noResultText {
+  text-align: center;
+  padding: 0.5em;
+}
+
+.spinner {
+  position: absolute;
+  top: 0.5em;
+  right: 0.75em;
 }
 
 .item {
@@ -95,10 +129,6 @@
   &:active {
     background-color: var(--gray-light--transparent);
   }
-
-  @nest &.itemSelected {
-    background-color: var(--selectable-item-color-hover);
-  }
 }
 
 .itemContent {
@@ -117,6 +147,12 @@
   }
 }
 
+.itemSelected {
+  composes: item;
+  background-color: var(--selectable-item-color-hover);
+  color: var(--selected-item-color--inverted);
+}
+
 .itemIcon {
   display: block;
   position: absolute;
@@ -126,13 +162,4 @@
   font-size: 1em;
   width: 2em;
   overflow: hidden;
-}
-
-.focused {
-  border: 1px solid var(--input-border-color-focus);
-  box-shadow: 0 0 8px color(var(--input-border-color-focus) a(35%));
-}
-
-.disabled {
-  opacity: 0.2;
 }
