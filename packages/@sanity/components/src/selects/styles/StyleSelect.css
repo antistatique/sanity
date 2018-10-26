@@ -18,28 +18,27 @@
 .inner {
   composes: root from 'part:@sanity/base/theme/forms/text-input-style';
   cursor: default;
+  display: block;
 
-  @nest &:hover {
-    box-shadow: var(--input-box-shadow--hover);
-    border-color: var(--input-border-color-hover);
+  @nest .transparent & {
+    transition: all 0.05s linear;
+    background-color: transparent;
+    border: 1px solid color(var(--gray-base) a(8%));
+
+    @nest &:hover {
+      background-color: var(--white);
+      border-color: var(--gray-light);
+    }
   }
 }
 
-.transparent .inner {
-  background-color: transparent;
+.title {
+  padding-right: 1em;
+  color: var(--text-color);
 }
 
-.transparent:hover .inner {
-  box-shadow: var(--input-box-shadow--hover);
-  border-color: var(--input-border-color-hover);
-  background-color: var(--input-bg);
-}
-
-.root:focus .inner,
-.root:focus:hover .inner {
-  box-shadow: var(--input-box-shadow--focus);
-  border-color: var(--input-border-color-focus);
-  background-color: var(--input-bg);
+.transparent:not(:hover) .inner {
+  box-shadow: none;
 }
 
 .selectContainer {
@@ -62,6 +61,7 @@
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 .popper {
   composes: shadow-6dp from "part:@sanity/base/theme/shadows-style";
   box-sizing: border-box;
@@ -79,36 +79,25 @@
   display: block;
   position: absolute;
   overflow: hidden;
+=======
+.popper {
+>>>>>>> [components] Add keyboard navigation to styleSelect
   composes: shadow-4dp from "part:@sanity/base/theme/shadows-style";
   box-sizing: border-box;
-  transform: translateY(-1px);
   background-color: var(--component-bg);
-  height: auto;
-  width: auto;
-  overflow-y: auto;
+  position: relative;
+  max-height: inherit;
+  overflow: auto;
 }
 
-.text {
-  color: var(--text-color);
-}
-
-.listContainerHidden {
-  display: none;
-}
-
-.noResultText {
-  text-align: center;
-  padding: 0.5em;
-}
-
-.spinner {
-  position: absolute;
-  top: 0.5em;
-  right: 0.75em;
+.list {
+  margin: 0;
+  padding: 0;
+  display: block;
 }
 
 .item {
-  display: block;
+  composes: item from 'part:@sanity/base/theme/layout/selectable-style';
   position: relative;
   border-bottom: 1px solid var(--gray-light);
   white-space: nowrap;
@@ -121,14 +110,6 @@
   &:last-child {
     border: 0;
   }
-
-  &:hover {
-    background-color: var(--selectable-item-color-hover);
-  }
-
-  &:active {
-    background-color: var(--gray-light--transparent);
-  }
 }
 
 .itemContent {
@@ -136,7 +117,7 @@
   padding: 0.5em 0;
 }
 
-.itemActive {
+.itemSelected {
   composes: item;
   background-color: var(--selected-item-color);
   color: var(--selected-item-color--inverted);
@@ -147,18 +128,12 @@
   }
 }
 
-.itemSelected {
-  composes: item;
-  background-color: var(--selectable-item-color-hover);
-  color: var(--selected-item-color--inverted);
-}
-
 .itemIcon {
   display: block;
   position: absolute;
+  transform: translateY(-50%);
   top: 50%;
   left: 0.5em;
-  transform: translateY(-50%);
   font-size: 1em;
   width: 2em;
   overflow: hidden;

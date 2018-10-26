@@ -1,254 +1,217 @@
 /* eslint-disable complexity */
 import PropTypes from 'prop-types'
 import React from 'react'
+import ArrowKeyNavigation from 'boundless-arrow-key-navigation/build'
 import styles from 'part:@sanity/components/selects/style-style'
-import {uniqueId, includes} from 'lodash'
-import FaAngleDown from 'part:@sanity/base/angle-down-icon'
+import ArrowIcon from 'part:@sanity/base/angle-down-icon'
 import CircleThinIcon from 'part:@sanity/base/circle-thin-icon'
 import CircleCheckIcon from 'part:@sanity/base/circle-check-icon'
-import Stacked from '../utilities/Stacked'
-import Escapable from '../utilities/Escapable'
-import CaptureOutsideClicks from '../utilities/CaptureOutsideClicks'
 import {List} from 'part:@sanity/components/lists/default'
-import {Manager, Target, Popper} from 'react-popper'
-import {Portal} from '../utilities/Portal'
+import Poppable from 'part:@sanity/components/utilities/poppable'
+
+const modifiers = {
+  preventOverflow: {
+    padding: 0,
+    boundariesElement: 'viewport'
+  },
+  offset: {
+    offset: '0, 0'
+  },
+  flip: {
+    enabled: false
+  },
+  customStyle: {
+    enabled: true,
+    fn: data => {
+      data.styles = {
+        ...data.styles,
+        maxHeight: window ? window.innerHeight - data.popper.top - 10 : 300
+      }
+      console.log(data.popper.top)
+      return data
+    }
+  }
+}
 
 class StyleSelect extends React.PureComponent {
   static propTypes = {
+    placeholder: PropTypes.string,
+    onChange: PropTypes.func,
+    onOpen: PropTypes.func,
+    onClose: PropTypes.func,
+    value: PropTypes.array,
+    renderItem: PropTypes.func,
     className: PropTypes.string,
-    disabled: PropTypes.bool,
     items: PropTypes.arrayOf(
       PropTypes.shape({
         title: PropTypes.string,
         active: PropTypes.bool
       })
     ),
-    onBlur: PropTypes.func,
-    onChange: PropTypes.func,
-    onClose: PropTypes.func,
-    onFocus: PropTypes.func,
-    onOpen: PropTypes.func,
-    placeholder: PropTypes.string,
-    renderItem: PropTypes.func,
-    transparent: PropTypes.bool,
-    value: PropTypes.array
+    transparent: PropTypes.bool
   }
 
   static defaultProps = {
     className: '',
-    disabled: false,
     onChange() {},
     onOpen() {},
     onClose() {},
-    items: []
+    items: [],
+    transparent: false
   }
-
-  _inputId = uniqueId('StyleSelect')
-  _keyUpHandler = null
-  _keyDownHandler = null
 
   state = {
-    hasFocus: false,
-    arrowNavigationPosition: 0
+    showList: false
   }
 
-  componentDidMount() {
-    this._keyUpHandler = document.body.addEventListener('keyup', this.handleKeyUp)
-    this._keyDownHandler = document.body.addEventListener('keydown', this.handleKeyDown)
-  }
+  buttonElement = React.createRef()
+  firstItemElement = React.createRef()
+  keyboardNavigation = false
+  menuHasKeyboardFocus = false
 
-  componentWillUnmount() {
-    document.body.removeEventListener('keyup', this._keyUpHandler)
-    document.body.removeEventListener('keydown', this._keyDownHandler)
-  }
-
-  handleClickOutside = () => {
-    this.handleCloseList()
-  }
-
-  handleFocus = event => {
-    this.setState({
-      hasFocus: true
-    })
-    if (this.props.onFocus) {
-      this.props.onFocus(event)
+  handleSelect = event => {
+    event.preventDefault()
+    event.stopPropagation()
+    const index = event.currentTarget.dataset.index
+    if (!index) {
+      return
     }
-  }
-
-  handleBlur = event => {
-    this.setState({
-      hasFocus: false
-    })
-    if (this.props.onBlur) {
-      this.props.onBlur(event)
+    const item = this.props.items[index]
+    if (!item) {
+      return
     }
-  }
-
-  handleSelect = item => {
     this.props.onChange(item)
     this.handleCloseList()
+    this.keyboardNavigation = false
   }
 
   handleOpenList = () => {
-    const {disabled} = this.props
-    if (!disabled) {
-      this.setState({
+    this.setState(
+      {
         showList: true
-      })
-      this.props.onOpen()
-    }
+      },
+      () => {
+        this.menuHasKeyboardFocus = true
+        this.keyboardNavigation = true
+        this.firstItemElement.current.focus()
+        this.props.onOpen()
+      }
+    )
   }
 
   handleCloseList = () => {
-    this.setState({
-      showList: false
-    })
-    this.props.onClose()
+    this.buttonElement.current.focus()
+    this.setState(
+      {
+        showList: false
+      },
+      () => {
+        this.props.onClose()
+      }
+    )
   }
 
-  handleInnerClick = () => {
+  handleButtonClick = event => {
     if (this.state.showList) {
       this.handleCloseList()
     } else {
       this.handleOpenList()
     }
+    this.keyboardNavigation = event.detail == 0
   }
 
-  handleKeyDown = event => {
-    const {items, value} = this.props
-    const {hasFocus, showList, arrowNavigationPosition} = this.state
-    if (!hasFocus) {
-      return
-    }
-    if (event.key === 'Tab') {
-      this.handleCloseList()
-    }
-    if (items) {
-      if (['ArrowUp', 'ArrowDown'].includes(event.key) && !showList) {
-        event.preventDefault()
-        const openPosition = value ? items.indexOf(value[0]) || 0 : 0
-        this.setState({showList: true, arrowNavigationPosition: openPosition})
-      }
-      if (showList && event.key == 'ArrowUp' && arrowNavigationPosition > 0) {
-        event.preventDefault()
-        this.setState({
-          arrowNavigationPosition: arrowNavigationPosition - 1
-        })
-        return
-      }
-      if (showList && event.key == 'ArrowDown' && arrowNavigationPosition < items.length - 1) {
-        event.preventDefault()
-        this.setState({
-          arrowNavigationPosition: arrowNavigationPosition + 1
-        })
-      }
-    }
-  }
-
-  handleKeyUp = event => {
-    const {items} = this.props
-    const {showList, hasFocus, arrowNavigationPosition} = this.state
-    if (!hasFocus) {
-      return
-    }
-    if (event.key === 'Enter' && showList) {
-      this.setState({showList: true})
-      this.handleSelect(items[arrowNavigationPosition])
-    }
-    if (event.key === 'Enter' && !showList) {
+  handleButtonKeyDown = event => {
+    if (event.key == 'Enter') {
       this.handleOpenList()
     }
   }
 
-  setPopperElement = element => {
-    this._popperElement = element
+  handleButtonBlur = event => {
+    if (this.state.showList && !this.menuHasKeyboardFocus && this.keyboardNavigation) {
+      this.handleCloseList()
+    }
+  }
+
+  handleMenuBlur = event => {
+    this.menuHasKeyboardFocus = false
+    this.buttonElement.current.focus()
+    this.handleCloseList()
+  }
+
+  handleItemKeyPress = event => {
+    if (event.key === 'Enter') {
+      this.handleSelect(event)
+    }
   }
 
   render() {
-    const {className, disabled, items, placeholder, transparent, value} = this.props
-
+    const {value, items, className, placeholder, renderItem, transparent} = this.props
     const {showList} = this.state
 
-    return (
-      <Manager>
-        <div
-          className={`
-            ${styles.root}
-            ${transparent ? styles.transparent : ''}
-            ${disabled ? styles.disabled : ''}
-            ${className || ''}
-          `}
-          tabIndex={0}
-          onClick={this.handleInnerClick}
-          onBlur={this.handleBlur}
-          onFocus={this.handleFocus}
-        >
-          <Target>
-            <div className={styles.inner}>
-              <div className={styles.selectContainer}>
-                <span className={styles.text}>
-                  {value && value.length > 1 && 'Multiple'}
-                  {value && value.length === 1 && value[0].title}
-                  {!value && placeholder}
-                </span>
-                <div className={styles.arrow}>
-                  <FaAngleDown color="inherit" />
-                </div>
-              </div>
-            </div>
-          </Target>
-          {showList && (
-            <Portal>
-              <Stacked>
-                {isActive => {
-                  return (
-                    <div className={styles.portal}>
-                      <Popper placement="bottom-start">
-                        <Escapable onEscape={isActive ? this.handleCloseList : undefined} />
-                        <CaptureOutsideClicks
-                          onClickOutside={isActive ? this.handleCloseList : undefined}
-                        >
-                          <div ref={this.setPopperElement}>
-                            <List className={styles.list}>
-                              {items.map((item, index) => {
-                                const isMultiple =
-                                  value && value.length > 1 && includes(value, item)
-                                const isItemActive = value && value.length === 1 && value[0] == item
-                                const isSelected = index === this.state.arrowNavigationPosition
-                                const classNames = [
-                                  isItemActive ? styles.itemActive : styles.item,
-                                  isMultiple ? styles.itemMultiple : null,
-                                  isSelected ? styles.itemSelected : null
-                                ].filter(Boolean)
-                                return (
-                                  <a
-                                    className={classNames.join(' ')}
-                                    key={item.key}
-                                    title={item.title}
-                                    onClick={() => this.handleSelect(item)}
-                                  >
-                                    <div className={styles.itemIcon}>
-                                      {isItemActive && <CircleCheckIcon />}
-                                      {isMultiple && <CircleThinIcon />}
-                                    </div>
-                                    <div className={styles.itemContent}>
-                                      {this.props.renderItem(item)}
-                                    </div>
-                                  </a>
-                                )
-                              })}
-                            </List>
-                          </div>
-                        </CaptureOutsideClicks>
-                      </Popper>
-                    </div>
-                  )
-                }}
-              </Stacked>
-            </Portal>
-          )}
+    const target = (
+      <div className={styles.inner} ref={this.buttonElement}>
+        <div className={styles.selectContainer}>
+          <span className={styles.title}>
+            {value && value.length > 1 && 'Multiple'}
+            {value && value.length == 1 && value[0].title}
+            {!value && placeholder}
+          </span>
+          <span className={styles.arrow}>
+            <ArrowIcon color="inherit" />
+          </span>
         </div>
-      </Manager>
+      </div>
+    )
+    return (
+      <div
+        tabIndex={0}
+        onClick={this.handleButtonClick}
+        onBlur={this.handleButtonBlur}
+        onKeyPress={this.handleButtonKeyDown}
+        className={`${styles.root} ${className || ''} ${transparent ? styles.transparent : ''}`}
+      >
+        <Poppable
+          target={target}
+          onEscape={this.handleCloseList}
+          modifiers={modifiers}
+          onClickOutside={this.handleCloseList}
+        >
+          {showList && (
+            <div className={styles.popper}>
+              <List className={styles.list}>
+                <ArrowKeyNavigation>
+                  {items.map((item, index) => {
+                    const isSemiSelected = value && value.length > 1 && value.includes(item)
+                    const isSelected = value && value.length === 1 && value[0].key == item.key
+                    const classNames = `
+                        ${isSelected ? styles.itemSelected : styles.item}
+                        ${isSemiSelected ? styles.itemSemiSelected : ''}
+                      `
+                    return (
+                      <div
+                        key={`${item.key}${index}`}
+                        title={item.title}
+                        data-index={index}
+                        onClick={this.handleSelect}
+                        className={classNames}
+                        onKeyPress={this.handleItemKeyPress} //eslint-disable-line react/jsx-no-bind
+                        ref={index === 0 && this.firstItemElement}
+                      >
+                        <div className={styles.itemIcon}>
+                          {isSelected && <CircleCheckIcon />}
+                          {isSemiSelected && <CircleThinIcon />}
+                        </div>
+                        <div className={styles.itemContent}>{renderItem(item)}</div>
+                      </div>
+                    )
+                  })}
+                </ArrowKeyNavigation>
+              </List>
+              <div tabIndex={0} onFocus={this.handleMenuBlur} />
+            </div>
+          )}
+        </Poppable>
+      </div>
     )
   }
 }
