@@ -27,7 +27,6 @@ const modifiers = {
         ...data.styles,
         maxHeight: window ? window.innerHeight - data.popper.top - 10 : 300
       }
-      console.log(data.popper.top)
       return data
     }
   }
