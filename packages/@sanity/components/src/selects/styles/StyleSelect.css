@@ -16,7 +16,6 @@
 .inner {
   composes: root from 'part:@sanity/base/theme/forms/text-input-style';
   cursor: default;
-  display: block;
 
   @nest .transparent & {
     transition: all 0.05s linear;
@@ -41,14 +40,18 @@
 
 .selectContainer {
   composes: selectContainer from 'part:@sanity/components/selects/default-style';
+  display: flex;
 }
 
 .arrow {
-  composes: functions from './SearchableSelect.css';
+  display: flex;
+  align-items: center;
+  padding-left: 0.5em;
+  margin-left: auto;
 }
 
 .popper {
-  composes: shadow-4dp from "part:@sanity/base/theme/shadows-style";
+  composes: shadow-6dp from "part:@sanity/base/theme/shadows-style";
   box-sizing: border-box;
   background-color: var(--component-bg);
   position: relative;
