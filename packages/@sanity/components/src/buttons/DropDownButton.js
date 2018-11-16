@@ -34,7 +34,7 @@ export default class DropDownButton extends React.PureComponent {
       })
     ),
     onAction: PropTypes.func.isRequired,
-    children: PropTypes.node.isRequired,
+    children: PropTypes.node,
     inverted: PropTypes.bool,
     icon: PropTypes.func,
     loading: PropTypes.bool,
@@ -43,14 +43,16 @@ export default class DropDownButton extends React.PureComponent {
     color: PropTypes.string,
     className: PropTypes.string,
     renderItem: PropTypes.func,
-    placement: PropTypes.string
+    placement: PropTypes.string,
+    showArrow: PropTypes.bool
   }
 
   static defaultProps = {
     renderItem(item) {
       return <div>{item.title}</div>
     },
-    placement: "bottom-start"
+    showArrow: true,
+    placement: 'bottom-start'
   }
 
   firstItemElement = React.createRef()
@@ -85,7 +87,7 @@ export default class DropDownButton extends React.PureComponent {
   }
 
   handleClickOutside = event => {
-    if (this._rootElement && this._rootElement.contains(event.target)) {
+    if (event && this._rootElement && this._rootElement.contains(event.target)) {
       // Stop the open button from being clicked
       event.stopPropagation()
       this.handleClose()
@@ -126,7 +128,7 @@ export default class DropDownButton extends React.PureComponent {
   }
 
   render() {
-    const {items, renderItem, children, kind, className, placement, ...rest} = omit(this.props, 'onAction')
+    const {items, renderItem, children, kind, className, placement, showArrow, ...rest} = omit(this.props, 'onAction')
     const {menuOpened} = this.state
 
     const target = (
@@ -138,10 +140,14 @@ export default class DropDownButton extends React.PureComponent {
         onBlur={this.handleButtonBlur}
         ref={this.buttonElement}
       >
-        <div className={styles.inner}>
-          {children}
-          <ArrowIcon color="inherit" className={styles.arrow} />
-        </div>
+        {showArrow ? (
+          <div className={styles.inner}>
+            {children}
+            <ArrowIcon color="inherit" className={styles.arrow} />
+          </div>
+        ) : (
+          children
+        )}
       </Button>
     )
 
